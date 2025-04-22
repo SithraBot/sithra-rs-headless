@@ -4,7 +4,7 @@ use procedures::*;
 
 use std::fs;
 
-use headless_chrome::Browser;
+use headless_chrome::{Browser, LaunchOptions};
 use ioevent::{prelude::*, rpc::*};
 use sithra_common::prelude::*;
 
@@ -23,7 +23,13 @@ impl SithraState for HeadlessState {
     }
     fn create(self_id: u64) -> Self {
         Self {
-            browser: Browser::default().unwrap(),
+            browser: Browser::new(
+                LaunchOptions::default_builder()
+                    .sandbox(false)
+                    .build()
+                    .unwrap(),
+            )
+            .unwrap(),
             self_id,
             pcw: DefaultProcedureWright::default(),
         }
