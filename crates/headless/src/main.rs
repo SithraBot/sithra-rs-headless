@@ -57,12 +57,12 @@ async fn take_screenshot_subscriber(state: State<HeadlessState>, msg: Message) -
         return Ok(());
     }
     let url = if let Some(MessageNode::Text(url)) = msg.first() {
-        url
+        url.trim_start_matches("take ")
     } else {
         return Ok(());
     };
     let requset = TakeScreenshot {
-        url: url.clone(),
+        url: url.to_string(),
         selector: Some("html".to_string()),
     };
     let img = take_screenshot_(&state, requset).await?;
