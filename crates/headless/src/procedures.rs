@@ -14,7 +14,12 @@ pub async fn take_screenshot(state: State<HeadlessState>, request: TakeScreensho
     let tab = state.browser.new_tab().map_err(into_err)?;
     let TakeScreenshot { url, selector } = request;
     tab.navigate_to(&url).map_err(into_err)?;
-    let file_path = format!("screenshot_{}.jpeg", Uuid::new_v4());
+    let file_path = format!("./headless/screenshot_{}.jpeg", Uuid::new_v4());
+    let file_path = fs::canonicalize(&file_path)
+        .await
+        .map_err(into_err)?
+        .to_string_lossy()
+        .to_string();
     if let Some(selector) = selector {
         let element = tab.wait_for_element(&selector).map_err(into_err)?;
         let image = element
