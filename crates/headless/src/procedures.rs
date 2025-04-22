@@ -32,26 +32,27 @@ pub async fn take_screenshot_(
     ).map_err(into_err)?;
     tab.navigate_to(&url).map_err(into_err)?;
     tab.wait_until_navigated().map_err(into_err)?;
-    let file_path = format!("./headless/screenshot_{}.jpeg", Uuid::new_v4());
-    let file_path = fs::canonicalize(&file_path)
-        .await
-        .map_err(into_err)?
-        .to_string_lossy()
-        .to_string();
+    let file_path = format!("./headless/screenshot/screenshot_{}.jpeg", Uuid::new_v4());
+    let file_path = std::path::Path::new(&file_path);
+    let file_dir = file_path.parent().unwrap();
+    fs::create_dir_all(file_dir).await.map_err(into_err)?;
     if let Some(selector) = selector {
         let element = tab.wait_for_element(&selector).map_err(into_err)?;
         let image = element
             .capture_screenshot(Page::CaptureScreenshotFormatOption::Jpeg)
             .map_err(into_err)?;
-        fs::write(&file_path, image).await.map_err(into_err)?;
+        fs::write(file_path, image).await.map_err(into_err)?;
     } else {
         let image = tab
             .capture_screenshot(Page::CaptureScreenshotFormatOption::Jpeg, None, None, false)
             .map_err(into_err)?;
-        fs::write(&file_path, image).await.map_err(into_err)?;
+        fs::write(file_path, image).await.map_err(into_err)?;
     }
     tab.close(true).map_err(into_err)?;
-    Ok(TakeScreenshotResponse { file_path })
+    let file_path = fs::canonicalize(file_path).await.map_err(into_err)?;
+    Ok(TakeScreenshotResponse {
+        file_path: file_path.to_string_lossy().into_owned(),
+    })
 }
 
 fn into_err<E>(e: E) -> CallSubscribeError
