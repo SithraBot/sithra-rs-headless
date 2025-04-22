@@ -22,10 +22,14 @@ impl SithraState for HeadlessState {
         self.self_id
     }
     fn create(self_id: u64) -> Self {
+        let path = fs::canonicalize("./headless").unwrap();
         Self {
             browser: Browser::new(
                 LaunchOptions::default_builder()
                     .sandbox(false)
+                    .user_data_dir(Some(path))
+                    .window_size(Some((1920, 1080)))
+                    .idle_browser_timeout(std::time::Duration::from_secs(60 * 30))
                     .build()
                     .unwrap(),
             )

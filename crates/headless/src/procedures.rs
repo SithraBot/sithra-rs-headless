@@ -11,9 +11,20 @@ use crate::HeadlessState;
 
 #[procedure]
 pub async fn take_screenshot(state: State<HeadlessState>, request: TakeScreenshot) -> Result {
-    let tab = state.browser.new_tab().map_err(into_err)?;
+    let tab = state
+        .browser
+        .new_context()
+        .map_err(into_err)?
+        .new_tab()
+        .map_err(into_err)?;
     let TakeScreenshot { url, selector } = request;
+    tab.set_user_agent(
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36",
+        Some("zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7,lt;q=0.6"),
+        Some("macOS"),
+    ).map_err(into_err)?;
     tab.navigate_to(&url).map_err(into_err)?;
+    tab.wait_until_navigated().map_err(into_err)?;
     let file_path = format!("./headless/screenshot_{}.jpeg", Uuid::new_v4());
     let file_path = fs::canonicalize(&file_path)
         .await
@@ -26,14 +37,14 @@ pub async fn take_screenshot(state: State<HeadlessState>, request: TakeScreensho
             .capture_screenshot(Page::CaptureScreenshotFormatOption::Jpeg)
             .map_err(into_err)?;
         fs::write(&file_path, image).await.map_err(into_err)?;
-        Ok(TakeScreenshotResponse { file_path })
     } else {
         let image = tab
             .capture_screenshot(Page::CaptureScreenshotFormatOption::Jpeg, None, None, false)
             .map_err(into_err)?;
         fs::write(&file_path, image).await.map_err(into_err)?;
-        Ok(TakeScreenshotResponse { file_path })
     }
+    tab.close(true).map_err(into_err)?;
+    Ok(TakeScreenshotResponse { file_path })
 }
 
 fn into_err<E>(e: E) -> CallSubscribeError
