@@ -10,7 +10,10 @@ use ioevent::{prelude::*, rpc::*};
 use sithra_common::event::MessageEventFlattened as Message;
 use sithra_common::prelude::*;
 
-const SUBSCRIBER: &[Subscriber<HeadlessState>] = &[create_subscriber!(take_screenshot)];
+const SUBSCRIBER: &[Subscriber<HeadlessState>] = &[
+    create_subscriber!(take_screenshot),
+    create_subscriber!(take_screenshot_subscriber),
+];
 
 #[derive(Clone)]
 struct HeadlessState {
