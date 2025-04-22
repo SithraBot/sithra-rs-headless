@@ -1,0 +1,32 @@
+[workspace]
+resolver = "3"
+members = ["crates/*"]
+default-members = ["crates/headless"]
+
+[workspace.package]
+edition = "2024"
+
+[workspace.dependencies]
+
+# Workspace member crates
+sithra_headless_common = { path = "crates/sithra_headless_common" }
+
+# Extrenal crates
+ioevent = { git = "https://github.com/BERADQ/ioevent.git" }
+sithra_common = { git = "https://github.com/SithraBot/sithra-rs.git" }
+log = "0.4.27"
+tokio = "1.44.2"
+serde = "1.0.219"
+
+[profile.dev]
+split-debuginfo = "unpacked"
+debug = "limited"
+codegen-units = 16
+
+[profile.release]
+debug = "limited"
+lto = "thin"
+panic = "abort"
+strip = true
+codegen-units = 1
+opt-level = 3
