@@ -1,11 +1,13 @@
 mod procedures;
 
 use procedures::*;
+use sithra_headless_common::TakeScreenshot;
 
 use std::fs;
 
 use headless_chrome::{Browser, LaunchOptions};
 use ioevent::{prelude::*, rpc::*};
+use sithra_common::event::MessageEventFlattened as Message;
 use sithra_common::prelude::*;
 
 const SUBSCRIBER: &[Subscriber<HeadlessState>] = &[create_subscriber!(take_screenshot)];
@@ -44,6 +46,31 @@ impl ProcedureCallWright for HeadlessState {
     fn next_echo(&self) -> impl Future<Output = u64> + Send + Sync {
         self.pcw.next_echo()
     }
+}
+
+#[subscriber]
+async fn take_screenshot_subscriber(state: State<HeadlessState>, msg: Message) -> Result {
+    if !msg.starts_with("take ") {
+        return Ok(());
+    }
+    if msg.len() != 1 {
+        return Ok(());
+    }
+    let url = if let Some(MessageNode::Text(url)) = msg.first() {
+        url
+    } else {
+        return Ok(());
+    };
+    let requset = TakeScreenshot {
+        url: url.clone(),
+        selector: Some("html".to_string()),
+    };
+    let img = take_screenshot_(&state, requset).await?;
+    let file_path = img.file_path;
+    let file_url = format!("file://{}", file_path);
+    let reply_msg = vec![MessageNode::Image(file_url)];
+    msg.reply(&state, reply_msg).await?;
+    Ok(())
 }
 
 #[sithra_common::main(subscribers = SUBSCRIBER, state = HeadlessState)]

@@ -11,6 +11,13 @@ use crate::HeadlessState;
 
 #[procedure]
 pub async fn take_screenshot(state: State<HeadlessState>, request: TakeScreenshot) -> Result {
+    take_screenshot_(&state, request).await
+}
+
+pub async fn take_screenshot_(
+    state: &State<HeadlessState>,
+    request: TakeScreenshot,
+) -> Result<TakeScreenshotResponse, CallSubscribeError> {
     let tab = state
         .browser
         .new_context()
