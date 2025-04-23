@@ -18,12 +18,7 @@ pub async fn take_screenshot_(
     state: &State<HeadlessState>,
     request: TakeScreenshot,
 ) -> Result<TakeScreenshotResponse, CallSubscribeError> {
-    let tab = state
-        .browser
-        .new_context()
-        .map_err(into_err)?
-        .new_tab()
-        .map_err(into_err)?;
+    let tab = state.browser.new_tab().map_err(into_err)?;
     let TakeScreenshot { url, selector } = request;
     tab.set_user_agent(
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36",
@@ -31,16 +26,16 @@ pub async fn take_screenshot_(
         Some("macOS"),
     ).map_err(into_err)?;
     tab.navigate_to(&url).map_err(into_err)?;
-    tab.wait_until_navigated().map_err(into_err)?;
-    let file_path = format!("./headless/screenshot/screenshot_{}.jpeg", Uuid::new_v4());
-    let file_path = std::path::Path::new(&file_path);
-    let file_dir = file_path.parent().unwrap();
-    fs::create_dir_all(file_dir).await.map_err(into_err)?;
     let selector = if let Some(selector) = selector {
         selector
     } else {
         "body".to_string()
     };
+    tab.wait_for_element(&selector).map_err(into_err)?;
+    let file_path = format!("./headless/screenshot/screenshot_{}.jpeg", Uuid::new_v4());
+    let file_path = std::path::Path::new(&file_path);
+    let file_dir = file_path.parent().unwrap();
+    fs::create_dir_all(file_dir).await.map_err(into_err)?;
     let element = tab.wait_for_element(&selector).map_err(into_err)?;
     let image = element
         .capture_screenshot(Page::CaptureScreenshotFormatOption::Jpeg)

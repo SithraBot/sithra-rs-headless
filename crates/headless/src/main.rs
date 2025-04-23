@@ -1,5 +1,6 @@
 mod procedures;
 
+use headless_chrome::browser::context::Context;
 use procedures::*;
 use sithra_headless_common::TakeScreenshot;
 
@@ -33,7 +34,6 @@ impl SithraState for HeadlessState {
                 LaunchOptions::default_builder()
                     .sandbox(false)
                     .user_data_dir(Some(path))
-                    .window_size(Some((1920, 1080)))
                     .idle_browser_timeout(std::time::Duration::from_secs(60 * 30))
                     .build()
                     .unwrap(),
