@@ -20,6 +20,13 @@ pub async fn take_screenshot_(
     request: TakeScreenshot,
 ) -> Result<TakeScreenshotResponse, CallSubscribeError> {
     let tab = state.browser.new_tab().map_err(into_err)?;
+    tab.set_bounds(Bounds::Normal {
+        left: Some(0),
+        top: Some(0),
+        width: Some(1280.),
+        height: Some(0.),
+    })
+    .map_err(into_err)?;
     let TakeScreenshot { url, selector } = request;
     tab.set_user_agent(
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36",
@@ -38,12 +45,7 @@ pub async fn take_screenshot_(
     let file_dir = file_path.parent().unwrap();
     fs::create_dir_all(file_dir).await.map_err(into_err)?;
     let element = tab.wait_for_element(&selector).map_err(into_err)?;
-    let bounds = tab
-        .wait_for_element("body")
-        .map_err(into_err)?
-        .get_box_model()
-        .map_err(into_err)?
-        .margin_viewport();
+    let bounds = element.get_box_model().map_err(into_err)?.margin_viewport();
     tab.set_bounds(Bounds::Normal {
         left: Some(0),
         top: Some(0),
