@@ -32,16 +32,17 @@ pub async fn take_screenshot_(
     } else {
         "body".to_string()
     };
+    tab.wait_until_navigated().map_err(into_err)?;
     tab.wait_for_element(&selector).map_err(into_err)?;
     let file_path = format!("./headless/screenshot/screenshot_{}.jpeg", Uuid::new_v4());
     let file_path = std::path::Path::new(&file_path);
     let file_dir = file_path.parent().unwrap();
     fs::create_dir_all(file_dir).await.map_err(into_err)?;
     let element = tab.wait_for_element(&selector).map_err(into_err)?;
-    let bounds = element.get_box_model().map_err(into_err)?;
+    let bounds = element.get_box_model().map_err(into_err)?.margin_viewport();
     tab.set_bounds(Bounds::Normal {
-        left: None,
-        top: None,
+        left: Some(0),
+        top: Some(0),
         width: Some(bounds.width),
         height: Some(bounds.height),
     })

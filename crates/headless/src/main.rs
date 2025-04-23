@@ -32,6 +32,8 @@ impl SithraState for HeadlessState {
         Self {
             browser: Browser::new(
                 LaunchOptions::default_builder()
+                    .enable_logging(false)
+                    .window_size(None)
                     .sandbox(false)
                     .user_data_dir(Some(path))
                     .idle_browser_timeout(std::time::Duration::from_secs(60 * 30))
