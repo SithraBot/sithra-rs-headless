@@ -1,4 +1,5 @@
 use headless_chrome::protocol::cdp::Page;
+use headless_chrome::types::Bounds;
 use ioevent::error::CallSubscribeError;
 use ioevent::prelude::*;
 use ioevent::rpc::*;
@@ -37,6 +38,15 @@ pub async fn take_screenshot_(
     let file_dir = file_path.parent().unwrap();
     fs::create_dir_all(file_dir).await.map_err(into_err)?;
     let element = tab.wait_for_element(&selector).map_err(into_err)?;
+    let bounds = element.get_box_model().map_err(into_err)?;
+    tab.set_bounds(Bounds::Normal {
+        left: None,
+        top: None,
+        width: Some(bounds.width),
+        height: Some(bounds.height),
+    })
+    .map_err(into_err)?;
+    element.scroll_into_view().map_err(into_err)?;
     let image = element
         .capture_screenshot(Page::CaptureScreenshotFormatOption::Jpeg)
         .map_err(into_err)?;
