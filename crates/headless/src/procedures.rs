@@ -38,7 +38,7 @@ pub async fn take_screenshot_(
         preprocess_script,
     } = request;
     let browser = state.browser.lock();
-    return_err!(browser.set_window_rect(0, 0, 1920, 1080).await);
+    return_err!(browser.set_window_rect(0, 0, 640, 480).await);
     return_err!(return_err!(
         timeout(Duration::from_secs(30), browser.goto(&url)).await
     ));
