@@ -45,10 +45,8 @@ pub async fn take_screenshot_(
             break;
         }
         tokio::time::sleep(Duration::from_secs(1)).await;
-        if start.elapsed() > Duration::from_secs(30) {
-            return Ok(TakeScreenshotResponse::Err(ErrKind::Other(
-                "Timeout waiting for page to load".to_string(),
-            )));
+        if start.elapsed() > Duration::from_secs(45) {
+            break;
         }
     }
     let selector = if let Some(selector) = selector {
