@@ -57,10 +57,7 @@ impl SithraState for HeadlessState {
         browser.capabilities(capabilities);
         Self {
             browser: Arc::new(Mutex::new(
-                ClientBuilder::native()
-                    .connect(&config.webdriver_url)
-                    .await
-                    .unwrap(),
+                browser.connect(&config.webdriver_url).await.unwrap(),
             )),
             self_id,
             pcw: DefaultProcedureWright::default(),
