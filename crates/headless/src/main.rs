@@ -1,12 +1,16 @@
+mod config;
 mod procedures;
 
-use headless_chrome::browser::context::Context;
+use config::Config;
+use fantoccini::{Client, ClientBuilder};
+use parking_lot::Mutex;
 use procedures::*;
 use sithra_headless_common::TakeScreenshot;
+use triomphe::Arc;
 
 use std::fs;
+use std::path::Path;
 
-use headless_chrome::{Browser, LaunchOptions};
 use ioevent::{prelude::*, rpc::*};
 use sithra_common::event::MessageEventFlattened as Message;
 use sithra_common::prelude::*;
@@ -18,7 +22,7 @@ const SUBSCRIBER: &[Subscriber<HeadlessState>] = &[
 
 #[derive(Clone)]
 struct HeadlessState {
-    browser: Browser,
+    browser: Arc<Mutex<Client>>,
     self_id: u64,
     pcw: DefaultProcedureWright,
 }
@@ -27,20 +31,19 @@ impl SithraState for HeadlessState {
     fn self_id(&self) -> u64 {
         self.self_id
     }
-    fn create(self_id: u64) -> Self {
+    async fn create(self_id: u64) -> Self {
+        if !Path::new("./headless").exists() {
+            fs::create_dir_all("./headless").unwrap();
+        }
         let path = fs::canonicalize("./headless").unwrap();
+        let config = Config::init(path).await;
         Self {
-            browser: Browser::new(
-                LaunchOptions::default_builder()
-                    .enable_logging(false)
-                    .window_size(None)
-                    .sandbox(false)
-                    .user_data_dir(Some(path))
-                    .idle_browser_timeout(std::time::Duration::from_secs(60 * 30))
-                    .build()
+            browser: Arc::new(Mutex::new(
+                ClientBuilder::native()
+                    .connect(&config.webdriver_url)
+                    .await
                     .unwrap(),
-            )
-            .unwrap(),
+            )),
             self_id,
             pcw: DefaultProcedureWright::default(),
         }
