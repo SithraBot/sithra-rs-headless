@@ -47,11 +47,8 @@ impl SithraState for HeadlessState {
         let chrome_options = json! ({
             "args": ["--headless"],
         });
-        let always_match = json!({
-            "moz:firefoxOptions": firefox_options,
-            "goog:chromeOptions": chrome_options,
-        });
-        capabilities.insert("alwaysMatch".to_string(), always_match);
+        capabilities.insert("moz:firefoxOptions".to_string(), firefox_options);
+        capabilities.insert("goog:chromeOptions".to_string(), chrome_options);
         browser.capabilities(capabilities);
         Self {
             browser: Arc::new(Mutex::new(
