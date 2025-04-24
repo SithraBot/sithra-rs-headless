@@ -49,7 +49,8 @@ pub async fn take_screenshot_(
             .for_element(fantoccini::Locator::Css(&selector))
             .await
     );
-    let (_, _, h, w) = return_err!(element.rectangle().await);
+    log::debug!("!!!!!!! element: {:?}", element);
+    let (_, _, w, h) = return_err!(element.rectangle().await);
     return_err!(browser.set_window_size(w as u32, h as u32).await);
     let screenshot = return_err!(element.screenshot().await);
     let path = Path::new("./headless/screenshots");
