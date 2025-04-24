@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, ProcedureCall)]
 pub struct TakeScreenshot {
+    pub preprocess_script: Option<String>,
     pub url: String,
     pub selector: Option<String>,
 }

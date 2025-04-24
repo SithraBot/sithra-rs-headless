@@ -32,7 +32,11 @@ pub async fn take_screenshot_(
     state: &State<HeadlessState>,
     request: TakeScreenshot,
 ) -> Result<TakeScreenshotResponse, CallSubscribeError> {
-    let TakeScreenshot { url, selector } = request;
+    let TakeScreenshot {
+        url,
+        selector,
+        preprocess_script,
+    } = request;
     let browser = state.browser.lock();
     return_err!(browser.set_window_rect(0, 0, 1920, 1080).await);
     return_err!(return_err!(
@@ -57,6 +61,9 @@ pub async fn take_screenshot_(
     } else {
         "body".to_string()
     };
+    if let Some(preprocess_script) = preprocess_script {
+        return_err!(browser.execute(&preprocess_script, vec![]).await);
+    }
     let element = return_err!(
         browser
             .wait()

@@ -86,6 +86,7 @@ async fn take_screenshot_subscriber(state: State<HeadlessState>, msg: Message) -
     let requset = TakeScreenshot {
         url: url.to_string(),
         selector: Some("html".to_string()),
+        preprocess_script: None,
     };
     let img = take_screenshot_(&state, requset).await?;
     if let TakeScreenshotResponse::Success(file_url) = img {
