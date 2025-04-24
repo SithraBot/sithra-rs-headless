@@ -48,10 +48,8 @@ impl SithraState for HeadlessState {
             "args": ["--headless"],
         });
         let always_match = json!({
-            "alwaysMatch": {
-                "moz:firefoxOptions": firefox_options,
-                "goog:chromeOptions": chrome_options,
-            },
+            "moz:firefoxOptions": firefox_options,
+            "goog:chromeOptions": chrome_options,
         });
         capabilities.insert("alwaysMatch".to_string(), always_match);
         browser.capabilities(capabilities);
