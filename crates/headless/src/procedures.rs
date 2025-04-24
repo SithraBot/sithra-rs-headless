@@ -8,6 +8,7 @@ use sithra_headless_common::ErrKind;
 use sithra_headless_common::TakeScreenshot;
 use sithra_headless_common::TakeScreenshotResponse;
 use tokio::fs;
+use tokio::time::Instant;
 use tokio::time::timeout;
 use uuid::Uuid;
 
@@ -36,8 +37,20 @@ pub async fn take_screenshot_(
     return_err!(return_err!(
         timeout(Duration::from_secs(30), browser.goto(&url)).await
     ));
-    let url = return_err!(browser.current_url().await);
-    return_err!(browser.wait().for_url(url).await);
+    let start = Instant::now();
+    loop {
+        let ready_state = return_err!(browser.execute("return document.readyState", vec![]).await);
+        let ready_state = ready_state.as_str();
+        if ready_state == Some("complete") {
+            break;
+        }
+        tokio::time::sleep(Duration::from_secs(1)).await;
+        if start.elapsed() > Duration::from_secs(30) {
+            return Ok(TakeScreenshotResponse::Err(ErrKind::Other(
+                "Timeout waiting for page to load".to_string(),
+            )));
+        }
+    }
     let selector = if let Some(selector) = selector {
         selector
     } else {
@@ -49,7 +62,6 @@ pub async fn take_screenshot_(
             .for_element(fantoccini::Locator::Css(&selector))
             .await
     );
-    log::debug!("!!!!!!! element: {:?}", element);
     let (_, _, w, h) = return_err!(element.rectangle().await);
     return_err!(browser.set_window_size(w as u32, h as u32).await);
     let screenshot = return_err!(element.screenshot().await);
