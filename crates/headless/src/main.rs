@@ -42,14 +42,14 @@ impl SithraState for HeadlessState {
         let mut browser = ClientBuilder::native();
         let mut capabilities = Capabilities::new();
         let firefox_options = json! ({
-            "args": ["-headless"],
+            "args": ["-headless","-no-sandbox","-disable-gpu"],
         });
         let user_data_dir = Path::new("./headless/user_data");
         fs::create_dir_all(user_data_dir).await.unwrap();
         let user_data_dir = fs::canonicalize(user_data_dir).await.unwrap();
         let user_data_arg = format!("--user-data-dir={}", user_data_dir.to_string_lossy());
         let chrome_options = json! ({
-            "args": ["--headless","--no-sandbox",user_data_arg],
+            "args": ["--headless","--no-sandbox","--disable-gpu",user_data_arg],
             "mobileEmulation": {
                 "deviceName": "iPhone 6/7/8",
             },
