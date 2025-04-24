@@ -8,9 +8,9 @@ use parking_lot::Mutex;
 use procedures::*;
 use serde_json::json;
 use sithra_headless_common::{TakeScreenshot, TakeScreenshotResponse};
+use tokio::fs;
 use triomphe::Arc;
 
-use std::fs;
 use std::path::Path;
 
 use ioevent::{prelude::*, rpc::*};
@@ -35,17 +35,21 @@ impl SithraState for HeadlessState {
     }
     async fn create(self_id: u64) -> Self {
         if !Path::new("./headless").exists() {
-            fs::create_dir_all("./headless").unwrap();
+            fs::create_dir_all("./headless").await.unwrap();
         }
-        let path = fs::canonicalize("./headless").unwrap();
+        let path = fs::canonicalize("./headless").await.unwrap();
         let config = Config::init(path).await;
         let mut browser = ClientBuilder::native();
         let mut capabilities = Capabilities::new();
         let firefox_options = json! ({
             "args": ["-headless"],
         });
+        let user_data_dir = Path::new("./headless/user_data");
+        fs::create_dir_all(user_data_dir).await.unwrap();
+        let user_data_dir = fs::canonicalize(user_data_dir).await.unwrap();
+        let user_data_arg = format!("--user-data-dir={}", user_data_dir.to_string_lossy());
         let chrome_options = json! ({
-            "args": ["--headless"],
+            "args": ["--headless","--disable-gpu","--no-sandbox",user_data_arg],
         });
         capabilities.insert("moz:firefoxOptions".to_string(), firefox_options);
         capabilities.insert("goog:chromeOptions".to_string(), chrome_options);
