@@ -7,7 +7,7 @@ use fantoccini::{Client, ClientBuilder};
 use parking_lot::Mutex;
 use procedures::*;
 use serde_json::json;
-use sithra_headless_common::TakeScreenshot;
+use sithra_headless_common::{TakeScreenshot, TakeScreenshotResponse};
 use triomphe::Arc;
 
 use std::fs;
@@ -84,10 +84,11 @@ async fn take_screenshot_subscriber(state: State<HeadlessState>, msg: Message) -
         selector: Some("html".to_string()),
     };
     let img = take_screenshot_(&state, requset).await?;
-    let file_path = img.file_path;
-    let file_url = format!("file://{}", file_path);
-    let reply_msg = vec![MessageNode::Image(file_url)];
-    msg.reply(&state, reply_msg).await?;
+    if let TakeScreenshotResponse::Success(file_url) = img {
+        let file_url = format!("file://{}", file_url);
+        let reply_msg = vec![MessageNode::Image(file_url)];
+        msg.reply(&state, reply_msg).await?;
+    }
     Ok(())
 }
 

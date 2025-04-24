@@ -1,11 +1,14 @@
 use std::path::Path;
+use std::time::Duration;
 
 use ioevent::error::CallSubscribeError;
 use ioevent::prelude::*;
 use ioevent::rpc::*;
+use sithra_headless_common::ErrKind;
 use sithra_headless_common::TakeScreenshot;
 use sithra_headless_common::TakeScreenshotResponse;
 use tokio::fs;
+use tokio::time::timeout;
 use uuid::Uuid;
 
 use crate::HeadlessState;
@@ -15,49 +18,43 @@ pub async fn take_screenshot(state: State<HeadlessState>, request: TakeScreensho
     take_screenshot_(&state, request).await
 }
 
+macro_rules! return_err {
+    ($e:expr) => {
+        match $e {
+            Ok(v) => v,
+            Err(e) => return Ok(TakeScreenshotResponse::Err(ErrKind::Other(e.to_string()))),
+        }
+    };
+}
+
 pub async fn take_screenshot_(
     state: &State<HeadlessState>,
     request: TakeScreenshot,
 ) -> Result<TakeScreenshotResponse, CallSubscribeError> {
     let TakeScreenshot { url, selector } = request;
     let browser = state.browser.lock();
-    browser.goto(&url).await.map_err(into_err)?;
-    let current_url = browser.current_url().await.map_err(into_err)?;
-    if url != current_url.to_string() {
-        return Err(into_err(format!(
-            "url not match: {} != {}",
-            url, current_url
-        )));
-    }
+    return_err!(return_err!(timeout(Duration::from_secs(30), browser.goto(&url)).await));
     let selector = if let Some(selector) = selector {
         selector
     } else {
         "body".to_string()
     };
-    let element = browser
-        .find(fantoccini::Locator::Css(&selector))
-        .await
-        .map_err(into_err)?;
-    let (_, _, w, h) = element.rectangle().await.map_err(into_err)?;
-    browser
+    let element = return_err!(browser
+        .wait()
+        .for_element(fantoccini::Locator::Css(&selector))
+        .await);
+    let (_, _, w, h) = return_err!(element.rectangle().await);
+    return_err!(browser
         .set_window_size(w as u32, h as u32)
-        .await
-        .map_err(into_err)?;
-    let screenshot = element.screenshot().await.map_err(into_err)?;
+        .await);
+    let screenshot = return_err!(element.screenshot().await);
     let path = Path::new("./headless/screenshots");
-    fs::create_dir_all(path).await.map_err(into_err)?;
+    return_err!(fs::create_dir_all(path).await);
     let file_name = format!("{}.png", Uuid::new_v4());
     let file_path = path.join(file_name);
-    fs::write(&file_path, screenshot).await.map_err(into_err)?;
-    let file_path = fs::canonicalize(file_path).await.map_err(into_err)?;
-    Ok(TakeScreenshotResponse {
-        file_path: file_path.to_string_lossy().to_string(),
-    })
-}
-
-fn into_err<E>(e: E) -> CallSubscribeError
-where
-    E: ToString,
-{
-    CallSubscribeError::Other(e.to_string())
+    return_err!(fs::write(&file_path, screenshot).await);
+    let file_path = return_err!(fs::canonicalize(file_path).await);
+    Ok(TakeScreenshotResponse::Success(
+        file_path.to_string_lossy().to_string(),
+    ))
 }
