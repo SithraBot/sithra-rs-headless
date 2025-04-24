@@ -33,20 +33,24 @@ pub async fn take_screenshot_(
 ) -> Result<TakeScreenshotResponse, CallSubscribeError> {
     let TakeScreenshot { url, selector } = request;
     let browser = state.browser.lock();
-    return_err!(return_err!(timeout(Duration::from_secs(30), browser.goto(&url)).await));
+    return_err!(return_err!(
+        timeout(Duration::from_secs(30), browser.goto(&url)).await
+    ));
+    let url = return_err!(browser.current_url().await);
+    return_err!(browser.wait().for_url(url).await);
     let selector = if let Some(selector) = selector {
         selector
     } else {
         "body".to_string()
     };
-    let element = return_err!(browser
-        .wait()
-        .for_element(fantoccini::Locator::Css(&selector))
-        .await);
-    let (_, _, w, h) = return_err!(element.rectangle().await);
-    return_err!(browser
-        .set_window_size(w as u32, h as u32)
-        .await);
+    let element = return_err!(
+        browser
+            .wait()
+            .for_element(fantoccini::Locator::Css(&selector))
+            .await
+    );
+    let (_, _, h, w) = return_err!(element.rectangle().await);
+    return_err!(browser.set_window_size(w as u32, h as u32).await);
     let screenshot = return_err!(element.screenshot().await);
     let path = Path::new("./headless/screenshots");
     return_err!(fs::create_dir_all(path).await);

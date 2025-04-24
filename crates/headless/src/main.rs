@@ -19,7 +19,7 @@ use sithra_common::prelude::*;
 
 const SUBSCRIBER: &[Subscriber<HeadlessState>] = &[
     create_subscriber!(take_screenshot),
-    create_subscriber!(take_screenshot_subscriber),
+    // create_subscriber!(take_screenshot_subscriber),
 ];
 
 #[derive(Clone)]
