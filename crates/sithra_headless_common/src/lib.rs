@@ -12,7 +12,14 @@ impl ProcedureCallRequest for TakeScreenshot {
 }
 
 #[derive(Serialize, Deserialize, ProcedureCall)]
-pub struct TakeScreenshotResponse {
-    pub file_path: String,
+pub enum TakeScreenshotResponse {
+    Success(String),
+    Err(ErrKind),
 }
 impl ProcedureCallResponse for TakeScreenshotResponse {}
+
+#[derive(Serialize, Deserialize)]
+pub enum ErrKind {
+    Timeout,
+    Other(String),
+}
