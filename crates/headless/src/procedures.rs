@@ -38,14 +38,16 @@ pub async fn take_screenshot_(
     return_err!(return_err!(
         timeout(Duration::from_secs(30), browser.goto(&url)).await
     ));
+    let current = return_err!(browser.current_url().await);
+    return_err!(browser.wait().for_url(current).await);
     let start = Instant::now();
     loop {
+        tokio::time::sleep(Duration::from_secs(3)).await;
         let ready_state = return_err!(browser.execute("return document.readyState", vec![]).await);
         let ready_state = ready_state.as_str();
         if ready_state == Some("complete") {
             break;
         }
-        tokio::time::sleep(Duration::from_secs(1)).await;
         if start.elapsed() > Duration::from_secs(45) {
             break;
         }
@@ -61,12 +63,16 @@ pub async fn take_screenshot_(
             .for_element(fantoccini::Locator::Css(&selector))
             .await
     );
-    let w = return_err!(browser
-        .execute("return document.documentElement.scrollWidth", vec![])
-        .await);
-    let h = return_err!(browser
-        .execute("return document.documentElement.scrollHeight", vec![])
-        .await);
+    let w = return_err!(
+        browser
+            .execute("return document.documentElement.scrollWidth", vec![])
+            .await
+    );
+    let h = return_err!(
+        browser
+            .execute("return document.documentElement.scrollHeight", vec![])
+            .await
+    );
     let w = w.as_f64().unwrap();
     let h = h.as_f64().unwrap();
     return_err!(browser.set_window_size(w as u32, h as u32).await);
