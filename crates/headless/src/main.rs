@@ -98,5 +98,5 @@ async fn take_screenshot_subscriber(state: State<HeadlessState>, msg: Message) -
 
 #[sithra_common::main(subscribers = SUBSCRIBER, state = HeadlessState)]
 async fn main(_ew: &EffectWright) {
-    fs::create_dir_all("./headless").unwrap();
+    fs::create_dir_all("./headless").await.unwrap();
 }
