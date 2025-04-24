@@ -2,9 +2,11 @@ mod config;
 mod procedures;
 
 use config::Config;
+use fantoccini::wd::Capabilities;
 use fantoccini::{Client, ClientBuilder};
 use parking_lot::Mutex;
 use procedures::*;
+use serde_json::json;
 use sithra_headless_common::TakeScreenshot;
 use triomphe::Arc;
 
@@ -37,6 +39,17 @@ impl SithraState for HeadlessState {
         }
         let path = fs::canonicalize("./headless").unwrap();
         let config = Config::init(path).await;
+        let mut browser = ClientBuilder::native();
+        let mut capabilities = Capabilities::new();
+        let firefox_options = json! ({
+            "args": ["-headless"],
+        });
+        let chrome_options = json! ({
+            "args": ["--headless"],
+        });
+        capabilities.insert("moz:firefoxOptions".to_string(), firefox_options);
+        capabilities.insert("goog:chromeOptions".to_string(), chrome_options);
+        browser.capabilities(capabilities);
         Self {
             browser: Arc::new(Mutex::new(
                 ClientBuilder::native()
